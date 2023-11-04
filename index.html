@@ -1,0 +1,425 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Auto MindMap</title>
+    <link rel="stylesheet"
+          href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css"/>
+    <script src="https://unpkg.com/mermaid/dist/mermaid.min.js"></script>
+</head>
+<style>
+    .prompt,
+    .mer_container,
+    .floating-input {
+        display: flex;
+        justify-content: center;
+    }
+
+    .floating-input {
+        position: fixed;
+        width: 80%;
+        bottom: 50px;
+        box-shadow: 8px 8px 20px rgba(0, 0, 0, 0.1);
+        border-radius: 15px;
+    }
+
+    .floating-input.anim::before, .floating-input.anim::after {
+        content: '';
+        position: absolute;
+        left: -2px;
+        top: -2px;
+        background: linear-gradient(45deg, #fb0094, #0000ff, #00ff00, #ffff00, #ff0000, #fb0094,
+        #0000ff, #00ff00, #ffff00, #ff0000);
+        background-size: 400%;
+        width: calc(100% + 4px);
+        height: calc(100% + 4px);
+        z-index: -1;
+        animation: steam 20s linear infinite;
+    }
+
+    @keyframes steam {
+        0% {
+            background-position: 0 0;
+            opacity: 0.15;
+        }
+        8% {
+            opacity: 0.4;
+        }
+        14% {
+            opacity: 1;
+        }
+
+        50% {
+            background-position: 400% 0;
+        }
+        100% {
+            background-position: 0 0;
+        }
+    }
+
+    .floating-input:after {
+        filter: blur(100px);
+    }
+
+    .floating-input input {
+        font-size: 18px;
+        width: 100%;
+        padding: 10px;
+        border: none;
+    }
+
+    form input:focus,
+    textarea:focus {
+        outline: none;
+    }
+
+    form input {
+        display: block;
+        width: 100%;
+        height: 100%;
+        border: none;
+        font-size: 18px;
+        border-bottom: 2px solid rgba(0, 0, 0, 0.12);
+        margin-top: 10px;
+        margin-bottom: 18px;
+        padding: 4px;
+    }
+
+    form textarea {
+        width: 100%;
+        box-sizing: border-box;
+        border-radius: 10px;
+        padding: 5px;
+    }
+
+    .settings {
+        margin-top: 25px;
+        display: flex;
+        justify-content: center;
+        cursor: pointer;
+    }
+
+    .settings details {
+        padding: 25px;
+        background-color: #fff;
+        position: absolute;
+        display: block;
+        width: 60%;
+        box-shadow: 8px 8px 20px rgba(0, 0, 0, 0.1);
+        border-radius: 15px;
+    }
+
+    .settings details summary {
+        text-align: center;
+    }
+
+    details {
+        transition: height ease-in 1s;
+    }
+
+    details[itemscope] {
+        height: inherit;
+    }
+
+    details form,
+    details textarea,
+    details select {
+        cursor: default;
+        margin-top: 10px;
+    }
+
+    .mer_container {
+        margin-top: 20vh;
+    }
+
+    #render {
+        width: 95%;
+    }
+
+    .mermaid svg {
+        max-width: 100% !important;
+        max-height: 85%;
+    }
+
+</style>
+<script>
+    mermaid.initialize({startOnLoad: false, theme: "dark"});
+
+    function checkAndReplaceLastLine(text) {
+        // Split the text into an array of lines
+        const lines = text.split('\n');
+
+        // Get the last line
+        const lastLine = lines[lines.length - 1];
+
+        // Check if the last line is "```"
+        if (lastLine === "```") {
+            // Replace the last line with an empty string
+            lines[lines.length - 1] = "";
+        }
+
+        // Join the lines back into a single text
+        return lines.join('\n');
+    }
+
+    document.addEventListener('DOMContentLoaded', function () {
+        const details = document.querySelector("#details");
+
+        details.addEventListener(
+            "click",
+            (event) => {
+                event.target.hasAttribute("open") ?
+                    event.target.removeAttribute("open")
+                    : event.target.setAttribute("open", "");
+            }
+        );
+
+        const endpoint = document.querySelector('#BaseURL');
+        const endpoint_val = localStorage.getItem("endpoint");
+        if (endpoint_val !== null) {
+            endpoint.value = endpoint_val;
+        }
+
+        endpoint.addEventListener(
+            "change",
+            (e) => {
+                localStorage.setItem("endpoint", e.target.value);
+            }
+        )
+
+        const template = document.querySelector('#template');
+        const template_val = localStorage.getItem("template");
+        if (template_val !== null) {
+            template.value = template_val;
+        }
+
+        template.addEventListener(
+            "change",
+            (e) => {
+                localStorage.setItem("template", e.target.value);
+            }
+        )
+
+        const model = document.querySelector('#model');
+        const model_val = localStorage.getItem("model");
+        if (model_val !== null) {
+            model.value = model_val;
+        }
+
+        model.addEventListener(
+            "change",
+            (e) => {
+                localStorage.setItem("model", e.target.value);
+            }
+        )
+
+        const custom_model = document.querySelector('#custom_model');
+        const custom_model_val = localStorage.getItem("custom_model");
+        if (custom_model_val !== null) {
+            custom_model.value = custom_model_val;
+        }
+
+        custom_model.addEventListener(
+            "change",
+            (e) => {
+                localStorage.setItem("custom_model", e.target.value);
+            }
+        )
+
+        const max_tokens = document.querySelector('#max_tokens');
+        const max_tokens_val = localStorage.getItem("max_tokens");
+        if (max_tokens_val !== null) {
+            max_tokens.value = max_tokens_val;
+        }
+
+        max_tokens.addEventListener(
+            "change",
+            (e) => {
+                localStorage.setItem("max_tokens", e.target.value);
+            }
+        )
+
+        const temperature = document.querySelector('#temp');
+        const temperature_val = localStorage.getItem("temperature");
+        if (temperature_val !== null) {
+            temperature.value = temperature_val;
+        }
+
+        temperature.addEventListener(
+            "change",
+            (e) => {
+                localStorage.setItem("temperature", e.target.value);
+            }
+        )
+
+        // Select the input field
+        const prompt = document.querySelector('#prompt');
+        const mermaid_text = document.querySelector('#text');
+        const mermaid_render = document.querySelector('#render');
+
+        // Add event listener for the keydown event
+        prompt.addEventListener('keydown', function (event) {
+
+            // Check if the Enter key was pressed
+            if (event.keyCode === 13) {
+                // Prevent the form from being submitted (which would cause the page to reload)
+                event.preventDefault();
+
+                let model_val = model.value;
+                // Define the data to send
+                let data = {
+                    model: model_val === "custom" ? custom_model.value : model_val,
+                    messages: [
+                        {
+                            role: "system",
+                            content: template.value
+                        },
+                        {
+                            role: "user",
+                            content: prompt.value
+                        }
+                    ],
+                    stream: false,
+                    max_tokens: Number(max_tokens.value),
+                    temperature: Number(temperature.value)
+                };
+
+                let token = document.querySelector('#token').value;
+                prompt.parentElement.classList.add("anim")
+                // Make the POST request
+                fetch(endpoint.value, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        Authorization: `Bearer ${token}`
+                    },
+                    body: JSON.stringify(data),
+                })
+                    .then(response => response.json())
+                    .then(data => {
+                        let resp = data.choices[0].message.content;
+                        let new_text = `mindmap\n${resp.substring(resp.indexOf("root("))}`
+                        const text = checkAndReplaceLastLine(new_text);
+                        mermaid_text.innerHTML = text;
+                        mermaid_render.innerHTML = text;
+                        mermaid.run();
+                        prompt.parentElement.classList.remove("anim");
+                        mermaid_render.removeAttribute("data-processed");
+                    })
+                    .catch((error) => {
+                        prompt.parentElement.classList.remove("anim");
+                        console.error('Error:', error);
+                    });
+            }
+        });
+    });
+</script>
+<body>
+<div class="settings">
+    <details id="details">
+        <summary>settings</summary>
+        <form>
+            <label for="BaseURL">Base URL:</label>
+            <br>
+            <input type="text" id="BaseURL" name="BaseURL"
+                   value="https://api.openai.com/v1/chat/completions">
+            <br>
+            <label for="token">Token:</label>
+            <br>
+            <input type="text" id="token" name="token">
+            <br>
+            <label for="model">Model:</label>
+            <br>
+            <select id="model" name="model">
+                <option>gpt-3.5-turbo</option>
+                <option>gpt-3.5-turbo-16k</option>
+                <option>gpt-4</option>
+                <option>custom</option>
+            </select>
+            <br>
+            <input type="text" id="custom_model" name="custom"
+                   placeholder="Custom model" style="display: none">
+            <br>
+            <label for="max_tokens">max_tokens:</label>
+            <br>
+            <input id="max_tokens" name="max_tokens" value="2000">
+            <br>
+            <label for="temp">temperature:</label>
+            <br>
+            <input id="temp" name="temperature" value="0.7">
+            <br>
+            <label for="template">Prompt template:</label>
+            <br>
+            <textarea id="template" name="template" rows="5">Create a mermaid mindmap based on user input like these examples:
+brainstorming mindmap
+mindmap
+        root(("leisure activities weekend"))
+                ["spend time with friends"]
+                ::icon(fafa fa-users)
+                        ("action activities")
+                        ::icon(fafa fa-play)
+                                ("dancing at night club")
+                                ("going to a restaurant")
+                                ("go to the theater")
+                ["spend time your self"]
+                ::icon(fa fa-fa-user)
+                        ("meditation")
+                        ::icon(fa fa-om)
+                        ("\`take a sunbath ☀️\`")
+                        ("reading a book")
+                        ::icon(fa fa-book)
+text summary mindmap:
+Barack Obama (born August 4, 1961) is an American politician who served as the 44th president of the United States from 2009 to 2017. A member of the Democratic Party, he was the first African-American president of the United States.
+mindmap
+    root("Barack Obama")
+        ("Born August 4, 1961")
+        ::icon(fa fa-baby-carriage)
+        ("American Politician")
+            ::icon(fa fa-flag)
+                ("44th President of the United States")
+                        ("2009 - 2017")
+        ("Democratic Party")
+            ::icon(fa fa-democrat)
+        ("First African-American President")
+cause and effects mindmap:
+mindmap
+    root("Landlord sells apartment")
+        ::icon(fa fa-sell)
+        ("Renter must be notified of sale")
+        ::icon(fa fa-envelope)
+            ("Tenants may feel some uncertainty")
+            ::icon(fa fa-question-circle)
+        ("Notice periods must be observed")
+        ::icon(fa fa-calendar)
+            ("Landlord can submit notice of termination for personal use")
+            ::icon(fa fa-home)
+                ("Tenant has to look for a new apartment")
+                ::icon(fa fa-search)
+        ("New owner")
+        ::icon(fa fa-user)
+                ("New owner takes over existing rental agreement")
+                ::icon(fa fa-file-contract)
+                        ("Tenant keeps previous apartment")
+                        ::icon(fa fa-handshake)
+                ("New owner terminates newly concluded lease")
+                ::icon(fa fa-ban)
+                        ("Tenant has to look for a new apartment")
+                        ::icon(fa fa-search)
+Only one root, use free FontAwesome icons, and follow node types "[", "(". No need to use "mermaid", "\`\`\`", or "graph TD". Respond only with code and syntax.</textarea>
+            <br>
+        </form>
+    </details>
+</div>
+<div class="mer_container">
+    <pre id="text" style="display: none"></pre>
+    <pre class="mermaid" id="render"></pre>
+</div>
+<div class="prompt">
+    <div class="floating-input">
+        <input id="prompt" type="text" placeholder="Prompt">
+    </div>
+</div>
+</body>
+
+</html>
